@@ -17,6 +17,10 @@ RIGHT_FOOT = 5
 line_width = 2
 marker_size = 8
 
+label_size = 16
+ticks_size = 15
+legend_size = 16
+
 # %% Data
 
 jump_types = ["1d", "2d"]
@@ -64,7 +68,7 @@ def stick_figure(data, frame):
 # Animation
 
 def create_animation(data, with_velocities = False):
-    xlim = (-1.5, 1.5)
+    xlim = (-1.5, 0.5)
     ylim = (-0.1, 1.75)
 
     scaling = 0.1
@@ -76,24 +80,29 @@ def create_animation(data, with_velocities = False):
     ax.set_aspect("equal")
     ax.grid()
 
+    plt.xlabel("Horizontal axis", fontsize = label_size)
+    plt.ylabel("Vertical axis", fontsize = label_size)
+    plt.xticks(fontsize = ticks_size)
+    plt.yticks(fontsize = ticks_size)
+
     outline, = ax.plot([], [], "-", color = "black", linewidth = line_width)
     markers, = ax.plot([], [], "o", color = "red", markersize = marker_size)
 
     if with_velocities:
-        velocity = [ax.arrow(0.0, 0.0, 0.0, 0.0, color = "green") for mdx in range(num_markers + 1)]
+        velocity = [ax.arrow(0.0, 0.0, 0.0, 0.0, color = "green") for mdx in range(NUM_MARKERS + 1)]
 
     floor, = ax.plot(xlim, [0.0, 0.0], "-", color= "blue", linewidth = 4)
     time_template = "Time = %.2f s"
-    time_text = ax.text(0.05, 0.9, "", transform = ax.transAxes)
+    time_text = ax.text(0.05, 0.9, "", transform = ax.transAxes, fontsize = legend_size)
 
     def animate(frame):
         x, y, v_x, v_y = stick_figure(data, frame)
         outline.set_data(x, y)
         markers.set_data(x, y)
-        time_text.set_text(time_template % (data["pos"][CHEST, frame, 0]))
+        time_text.set_text(time_template % (data["time"][frame]))
 
         if with_velocities:
-            for mdx in range(num_markers + 1):
+            for mdx in range(NUM_MARKERS + 1):
                 velocity[mdx].set_data(x = x[mdx], y = y[mdx], dx = scaling * (x[mdx] + v_x[mdx]), dy = scaling * (y[mdx] + v_y[mdx]))
 
             return [floor, outline, markers, time_text] + velocity
@@ -102,7 +111,46 @@ def create_animation(data, with_velocities = False):
 
     jump = animation.FuncAnimation(fig, animate, num_frames, interval = 1400 * interval, blit = True)
     plt.show()
-stick_figure(good["1d"], 0)
 
+jump_type = "2d"
+with_velocities = True
+create_animation(bad[jump_type], with_velocities)
+create_animation(good[jump_type], with_velocities)
+
+plt.show()
+
+# %%
+
+jump_type = "2d"
+data = bad[jump_type]
+num_frames = data["time"].shape[0]
+
+for frame in [0, 16, num_frames - 1]:
+    xlim = (-1.5, 0.5)
+    ylim = (-0.1, 1.75)
+
+    fig = plt.figure(figsize = (6, 6))
+    ax = fig.add_subplot(autoscale_on = False, xlim = xlim, ylim = ylim)
+    ax.set_aspect("equal")
+    ax.grid()
+
+    plt.xlabel("Horizontal axis", fontsize = label_size)
+    plt.ylabel("Vertical axis", fontsize = label_size)
+
+    x, y, v_x, v_y = stick_figure(data, frame)
+
+    floor, = ax.plot(xlim, [0.0, 0.0], "-", color= "blue", linewidth = 4)
+    plt.plot(x, y, "-", color = "black", linewidth = line_width)
+    plt.plot(x, y, "o", color = "red", linewidth = line_width)
+
+    plt.xticks(np.linspace(xlim[0], xlim[1], 5), fontsize = ticks_size)
+    plt.yticks(fontsize = ticks_size)
+
+    #plt.savefig("good_2d_%d.png" % (frame), bbox_inches = "tight")
+    plt.savefig("bad_2d_%d.png" % (frame), bbox_inches = "tight")
+
+    plt.show()
+
+# %% End of script
 
 # %% End of script
